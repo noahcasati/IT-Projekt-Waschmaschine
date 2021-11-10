@@ -1,5 +1,7 @@
 /*! \mainpage Controller
 
+//Test123
+
 Simple washing machine controller.
 
 The goal is to control the washing machine from this program.
@@ -226,6 +228,9 @@ bool CreateNextSteadyCommand(char szCommand[])
   case 4:                                       // request warnings
     strcpy(szCommand, "W?");                    // build command
     break;
+  case 5:                                       // request door state
+    strcpy(szCommand, "D?");                    // build command
+    break;
   // more cases for other requests or settings
   default:
     nIndex = 0;                                 // start over
@@ -265,6 +270,9 @@ bool WorkOnCommandsForDigitalIO(char szCommand[])
       case 'H':
         digitalWrite(nHeating, bValue);
         return true;                            // done
+      case'D':
+         digitalWrite(nDoorClosed, bValue);
+         return true;
       default:
         break;                                  // expect an I²C a command, see below
       }
