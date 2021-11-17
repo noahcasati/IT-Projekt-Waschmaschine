@@ -86,6 +86,8 @@ with x either 1 or 0.
 #include "Wire.h"
 // include I²C connection
 #include "I2C_Master.h"
+// include windows header for Wait()
+//#include "Windows.h"
 
                                                 // time management
 //! for 10 msec detection
@@ -357,19 +359,22 @@ void door()
     }
 }
 
+
+
 void waschprogramm1(char szCommand[])
 {
   int O = 3;
   int o = 2;
-  int rpm = 
-  *szCommand = 0;                               // initially empty
+  int rpm = 800;
+  double targetTemperature = 60;
+  double targetWaterLevel = 2.3;
 
-  static int   nIndex = 0;                      // index walking through requests
-  switch ( ++nIndex )
+  strcpy(szCommand, "I=1");
+  while(dTemperature < targetTemperature)
   {
-  case 1:                                       // request time
-    strcpy(szCommand, "T?");                    // build command
-    break;
+    wait(1);
+  }
+
 }
 
 //! Show some data values
