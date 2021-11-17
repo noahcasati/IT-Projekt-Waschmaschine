@@ -105,18 +105,19 @@ const long      I2C_FREQUENCY = 100000L;
 const int       nWaterIntake = 2;               ///< water intake valve
 const int       nWaterPump = 3;                 ///< water pump
 const int       nHeating = 4;                   ///< heating
-const int       doorSwitch = 9;
+const int       doorSwitch = 9;                 ///< pin doorswitch
+bool            bDoorClose = 0;                 ///< Türvariable
+
 
                                                 // static const PLC IO input numbers
-const int       nDoorClosed = 8;                ///< door closed sensor
+const int       nDoorClosed = 8;                ///< door closed sensor (Input)
 
                                                 // live data from plant over I²C bus
 double          dTime = 0.0;                    ///< simulation time in min
 double          dTemperature = 0.0;             ///< temperature
 double          dWaterLevel = 0.0;              ///< water level
 int             nWarnings = 0;                  ///< warning bits
-bool            bDoorClose = 0;                 ///< Türvariable
-//bool            bDoorClosed = 0;                // Wenn Tür geschlossen -> 1
+double          drpm = 0.0;                     ///< rpm
 
 //! Banner and version number
 const char     szBanner[] = "# Washing Machine Controller V3.04";
@@ -239,6 +240,9 @@ bool CreateNextSteadyCommand(char szCommand[])
     else
       strcpy(szCommand, "D=0");                // Tür auf
     break;
+  case 6:
+      strcpy(szCommand, "R?");                    // rpm Abfrage
+
   // more cases for other requests or settings
   default:
     nIndex = 0;                                 // start over
@@ -315,8 +319,8 @@ bool InterpreteResponse(char szResponse[])
     case 'A':                                   // got a fresh dWaterLevel value
       dWaterLevel = atof(szResponse+2);         // convert response part after '=' to double
       return true;                              // done
-    //case 'D':
-      //bDoorClosed = digitalRead(nDoorClosed);
+    //case 'R':
+      //dTemperature = atof(szResponse+2);        // convert response part after '=' to double
       //return true;
     case 'W':                                   // got a fresh warning bits value
       nWarnings = atoi(szResponse+2);           // convert response part after '=' to integer
