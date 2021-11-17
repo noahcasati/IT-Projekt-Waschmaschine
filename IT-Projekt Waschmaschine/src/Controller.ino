@@ -241,7 +241,7 @@ bool CreateNextSteadyCommand(char szCommand[])
       strcpy(szCommand, "D=0");                // Tür auf
     break;
   case 6:
-      strcpy(szCommand, "R?");                    // rpm Abfrage
+      strcpy(szCommand, "r?");                    // rpm Abfrage
 
   // more cases for other requests or settings
   default:
@@ -319,9 +319,9 @@ bool InterpreteResponse(char szResponse[])
     case 'A':                                   // got a fresh dWaterLevel value
       dWaterLevel = atof(szResponse+2);         // convert response part after '=' to double
       return true;                              // done
-    //case 'R':
-      //dTemperature = atof(szResponse+2);        // convert response part after '=' to double
-      //return true;
+    case 'R':
+      drpm = atof(szResponse+2);              // convert response part after '=' to double
+      return true;
     case 'W':                                   // got a fresh warning bits value
       nWarnings = atoi(szResponse+2);           // convert response part after '=' to integer
       return true;                              // done
@@ -365,6 +365,8 @@ void ShowData()
   Serial.print(dWaterLevel);
   Serial.print(" D=");
   Serial.print(digitalRead(nDoorClosed));
+  Serial.print(" RPM=");
+  Serial.print(drpm);
   Serial.print(" W=0x");
   Serial.print(nWarnings, HEX);
   Serial.println("");
