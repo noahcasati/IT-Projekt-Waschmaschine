@@ -117,7 +117,9 @@ double          dTime = 0.0;                    ///< simulation time in min
 double          dTemperature = 0.0;             ///< temperature
 double          dWaterLevel = 0.0;              ///< water level
 int             nWarnings = 0;                  ///< warning bits
-double          drpm = 0.0;                     ///< rpm
+int          drpm = 0.0;                     ///< rpm
+int          dWaeschemenge = 0.0;            ///< Wäschemenge
+int          dWaschmittelmenge = 0.0;        ///< Waschmittelmange
 
 //! Banner and version number
 const char     szBanner[] = "# Washing Machine Controller V3.04";
@@ -319,8 +321,14 @@ bool InterpreteResponse(char szResponse[])
     case 'A':                                   // got a fresh dWaterLevel value
       dWaterLevel = atof(szResponse+2);         // convert response part after '=' to double
       return true;                              // done
-    case 'R':
+    case 'r':
       drpm = atof(szResponse+2);              // convert response part after '=' to double
+      return true;
+    case 'L':
+      dWaeschemenge = atof(szResponse+2);
+      return true;
+    case 'o':
+      dWaschmittelmenge = atof(szResponse+2);
       return true;
     case 'W':                                   // got a fresh warning bits value
       nWarnings = atoi(szResponse+2);           // convert response part after '=' to integer
@@ -349,6 +357,21 @@ void door()
     }
 }
 
+void waschprogramm1(char szCommand[])
+{
+  int O = 3;
+  int o = 2;
+  int rpm = 
+  *szCommand = 0;                               // initially empty
+
+  static int   nIndex = 0;                      // index walking through requests
+  switch ( ++nIndex )
+  {
+  case 1:                                       // request time
+    strcpy(szCommand, "T?");                    // build command
+    break;
+}
+
 //! Show some data values
 /*!
 Show some data values
@@ -367,6 +390,10 @@ void ShowData()
   Serial.print(digitalRead(nDoorClosed));
   Serial.print(" RPM=");
   Serial.print(drpm);
+  Serial.print(" L=");
+  Serial.print(dWaeschemenge);
+  Serial.print(" O=");
+  Serial.print(dWaschmittelmenge);
   Serial.print(" W=0x");
   Serial.print(nWarnings, HEX);
   Serial.println("");
