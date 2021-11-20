@@ -363,16 +363,18 @@ void door()
 
 void waschprogramm1(char szCommand[])
 {
-  int O = 3;
-  int o = 2;
-  int rpm = 800;
-  double targetTemperature = 60;
-  double targetWaterLevel = 2.3;
+  int     O = 3;                    // Maschpulvermenge
+  int     o = 2;                    // Weichspüler
+  int     rpm = 800;                // Trommel rpm
+  double  targetTemperature = 60;   
+  double  targetWaterLevel = 2.3;
+  int     maxWaescheMenge = 6;
+  bool    isRunning = false;        // Wenn Waschprogramm läuft -> =true
 
   strcpy(szCommand, "I=1");
   while(dTemperature < targetTemperature)
   {
-    wait(1);
+    delay(1000);
   }
 
 }
