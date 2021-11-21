@@ -511,7 +511,7 @@ This allows to use the integrated Arduino serial plotter or an external software
 */
 void Task_1s()
 {
-  int zeit ++;                                  // Timer
+  zeit ++;                                  // Timer
 
   ToggleDigitalIOPort(LEDpin);                  // toggle output to LED
 
