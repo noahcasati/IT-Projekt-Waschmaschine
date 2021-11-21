@@ -122,6 +122,7 @@ int             nWarnings = 0;                  ///< warning bits
 int          drpm = 0.0;                     ///< rpm
 int          dWaeschemenge = 0.0;            ///< Wäschemenge
 int          dWaschmittelmenge = 0.0;        ///< Waschmittelmange
+int          zeit = 0;                       ///< Timer
 
 //! Banner and version number
 const char     szBanner[] = "# Washing Machine Controller V3.04";
@@ -359,7 +360,21 @@ void door()
     }
 }
 
-
+void handleTemp(double tTemperature, char command[])
+{
+  if(dTemperature < tTemperature + 2)
+  {
+      strcpy(command, "H=1");
+  }
+  else if(dTemperature < tTemperature && dTemperature > tTemperature)
+  {
+    Serial.println("Temperatur ist im Rahmen");
+  }
+  else 
+  {
+      strcpy(command, "H=0");
+  }
+}
 
 void waschprogramm1(char szCommand[])
 {
@@ -371,10 +386,10 @@ void waschprogramm1(char szCommand[])
   int     maxWaescheMenge = 6;
   bool    isRunning = false;        // Wenn Waschprogramm läuft -> =true
 
-  strcpy(szCommand, "I=1");
-  while(dTemperature < targetTemperature)
+  //strcpy(szCommand, "I=1");
+  while(isRunning == true)
   {
-    delay(1000);
+    handleTemp(targetTemperature, szCommand);
   }
 
 }
@@ -496,6 +511,8 @@ This allows to use the integrated Arduino serial plotter or an external software
 */
 void Task_1s()
 {
+  int zeit ++;                                  // Timer
+
   ToggleDigitalIOPort(LEDpin);                  // toggle output to LED
 
   ShowData();                                   // possibly remove later
