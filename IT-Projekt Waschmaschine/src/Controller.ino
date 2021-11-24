@@ -376,7 +376,7 @@ void handleTemp(double tTemperature, char command[])
   }
 }
 
-void waschprogramm1(char szCommand[])
+void waschprogramm1(char szCommand[],bool run)
 {
   int     O = 3;                    // Maschpulvermenge
   int     o = 2;                    // Weichspüler
@@ -384,12 +384,12 @@ void waschprogramm1(char szCommand[])
   double  targetTemperature = 60;   
   double  targetWaterLevel = 2.3;
   int     maxWaescheMenge = 6;
-  bool    isRunning = false;        // Wenn Waschprogramm läuft -> =true
 
   //strcpy(szCommand, "I=1");
-  while(isRunning == true)
+  while(run == true && bDoorClose == true)
   {
     handleTemp(targetTemperature, szCommand);
+    delay(1000);
   }
 
 }
@@ -532,6 +532,9 @@ Such intervals are often called sampling time.
 */
 void loop()
 {
+  static char   szCommand[I2C_DATA_MAX+1];       // buffer for commands
+  bool          isRunning = false;               // Wenn Waschprogramm läuft -> =true
+
   long  msecCurrentMillis = millis();
   if ( ( msecCurrentMillis - msecPreviousMillis ) < 10 )
     return;
@@ -548,6 +551,7 @@ void loop()
       Task_1s();                                // call user 1 sec function
     }
   }
+  waschprogramm1(szCommand, isRunning);
 
   I2C_Master_Steady();                          // give background processing a chance
   delay(1);
