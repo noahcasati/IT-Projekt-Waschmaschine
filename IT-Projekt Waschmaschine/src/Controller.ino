@@ -360,11 +360,19 @@ void door()
     }
 }
 
-void handleTemp(double tTemperature, char command[])
+void charArrOut(char arr[])
 {
+
+}
+
+void handleTemp(double tTemperature)
+{
+  char command[] = "C=?";
   if(dTemperature < tTemperature + 2)
   {
-      strcpy(command, "H=1");
+      //strcpy(command, "H=1");
+      digitalWrite(nHeating, true);
+      Serial.println("Heizung an");
   }
   else if(dTemperature < tTemperature && dTemperature > tTemperature)
   {
@@ -372,8 +380,17 @@ void handleTemp(double tTemperature, char command[])
   }
   else 
   {
-      strcpy(command, "H=0");
+      //strcpy(command, "H=0");
+      digitalWrite(nHeating, false);
+      Serial.println("Heizung aus");
   }
+      I2C_SendRequest(I2C_PLANT_ADDR, command);
+      Serial.print("Jo");
+      Serial.println("Jetzt Senden");
+
+      ShowData();
+      delay(500);
+
 }
 
 void waschprogramm1(char szCommand[],bool run)
@@ -384,12 +401,14 @@ void waschprogramm1(char szCommand[],bool run)
   double  targetTemperature = 60;   
   double  targetWaterLevel = 2.3;
   int     maxWaescheMenge = 6;
+  bool    isRunning = run;
 
   //strcpy(szCommand, "I=1");
-  while(run == true && bDoorClose == true)
+  if(isRunning == true and bDoorClose == true)
   {
-    handleTemp(targetTemperature, szCommand);
-    delay(1000);
+    handleTemp(targetTemperature);
+    Serial.println("Handle Temp ist durch zurück in wp1");
+    isRunning = false;
   }
 
 }
@@ -451,7 +470,7 @@ void Task_100ms()
     }
   }
 
-  // check for direct IO commands to physical ports
+  // check for direct IO commands to physical ports 
   if ( bOperatesCommand )                       // working on a current command
   {
     if ( szCommand[0] == 'R' )                  // check special case first
@@ -533,7 +552,7 @@ Such intervals are often called sampling time.
 void loop()
 {
   static char   szCommand[I2C_DATA_MAX+1];       // buffer for commands
-  bool          isRunning = false;               // Wenn Waschprogramm läuft -> =true
+  bool          isRunning = true;               // Wenn Waschprogramm läuft -> =true
 
   long  msecCurrentMillis = millis();
   if ( ( msecCurrentMillis - msecPreviousMillis ) < 10 )
@@ -552,6 +571,7 @@ void loop()
     }
   }
   waschprogramm1(szCommand, isRunning);
+  isRunning = false;
 
   I2C_Master_Steady();                          // give background processing a chance
   delay(1);
