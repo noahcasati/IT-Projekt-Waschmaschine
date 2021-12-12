@@ -96,6 +96,9 @@ unsigned long   msecPreviousMillis = 0;
 int             nCount10msec = 0;
 //! counter for 100 msec up to 1sec
 int             nCount100msec = 0;
+// enable waschprogramm
+bool          isRunning = true;               
+
 
                                                 // I2C
 //! Address for I²C slave
@@ -552,7 +555,6 @@ Such intervals are often called sampling time.
 void loop()
 {
   static char   szCommand[I2C_DATA_MAX+1];       // buffer for commands
-  bool          isRunning = true;               // Wenn Waschprogramm läuft -> =true
 
   long  msecCurrentMillis = millis();
   if ( ( msecCurrentMillis - msecPreviousMillis ) < 10 )
@@ -571,7 +573,6 @@ void loop()
     }
   }
   waschprogramm1(szCommand, isRunning);
-  isRunning = false;
 
   I2C_Master_Steady();                          // give background processing a chance
   delay(1);
