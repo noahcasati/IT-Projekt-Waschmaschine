@@ -368,8 +368,10 @@ void charArrOut(char arr[])
 
 }
 
-void handleTemp(double tTemperature)
+int handleTemp(double tTemperature)
 {
+  while(dTemperature <= tTemperature + 2 && dTemperature > tTemperature) 
+  {
   char command[] = "C=?";
   if(dTemperature < tTemperature + 2)
   {
@@ -380,6 +382,7 @@ void handleTemp(double tTemperature)
   else if(dTemperature < tTemperature && dTemperature > tTemperature)
   {
     Serial.println("Temperatur ist im Rahmen");
+    return 0;
   }
   else 
   {
@@ -393,10 +396,12 @@ void handleTemp(double tTemperature)
 
       ShowData();
       delay(500);
+      Serial.println("Temp Schleife läuft noch!!!");
+  }
 
 }
 
-void waschprogramm1(char szCommand[],bool run)
+void waschprogramm1(bool run)
 {
   int     O = 3;                    // Maschpulvermenge
   int     o = 2;                    // Weichspüler
@@ -404,10 +409,9 @@ void waschprogramm1(char szCommand[],bool run)
   double  targetTemperature = 60;   
   double  targetWaterLevel = 2.3;
   int     maxWaescheMenge = 6;
-  bool    isRunning = run;
 
   //strcpy(szCommand, "I=1");
-  if(isRunning == true and bDoorClose == true)
+  if(run == true and bDoorClose == true)
   {
     handleTemp(targetTemperature);
     Serial.println("Handle Temp ist durch zurück in wp1");
@@ -572,7 +576,7 @@ void loop()
       Task_1s();                                // call user 1 sec function
     }
   }
-  waschprogramm1(szCommand, isRunning);
+  waschprogramm1(isRunning);
 
   I2C_Master_Steady();                          // give background processing a chance
   delay(1);
