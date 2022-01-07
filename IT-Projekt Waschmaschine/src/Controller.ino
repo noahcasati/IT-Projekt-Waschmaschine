@@ -86,8 +86,8 @@ with x either 1 or 0.
 #include "Wire.h"
 // include I²C connection
 #include "I2C_Master.h"
-// include windows header for Wait()
-//#include "Windows.h"
+// include Metro header for "Multitasking"
+#include "Metro.h"
 
                                                 // time management
 //! for 10 msec detection
@@ -97,7 +97,7 @@ int             nCount10msec = 0;
 //! counter for 100 msec up to 1sec
 int             nCount100msec = 0;
 // enable waschprogramm
-bool          isRunning = true;               
+bool          isRunning = false;               
 
 
                                                 // I2C
@@ -125,7 +125,20 @@ int             nWarnings = 0;                  ///< warning bits
 int          drpm = 0.0;                     ///< rpm
 int          dWaeschemenge = 0.0;            ///< Wäschemenge
 int          dWaschmittelmenge = 0.0;        ///< Waschmittelmange
-int          zeit = 0;                       ///< Timer
+
+// Timing Variablen fürs "Multitasking" (Metro)
+Metro hundert = Metro(100);
+Metro fuenfhundert = Metro(500);
+Metro sekunde = Metro(1000);
+
+Metro temp100 = Metro(100);
+Metro akt_data = Metro(100);
+Metro send_data_plant = Metro(100);
+Metro send_data_esp = Metro(500);
+Metro receive_data_esp = Metro(500);
+Metro display_data = Metro(1000);
+Metro wp1_duration = Metro(120000);
+
 
 //! Banner and version number
 const char     szBanner[] = "# Washing Machine Controller V3.04";
@@ -370,32 +383,52 @@ void charArrOut(char arr[])
 
 int handleTemp(double tTemperature)
 {
-  while(dTemperature <= tTemperature + 2 && dTemperature > tTemperature) 
+  while(dTemperature <= tTemperature || dTemperature > tTemperature + 2) 
   {
   char command[] = "C=?";
-  if(dTemperature < tTemperature + 2)
+  I2C_SendRequest(I2C_PLANT_ADDR, command);
+  Serial.print(" C=");
+  Serial.print(dTemperature);
+
+  if(dTemperature < tTemperature)
   {
       //strcpy(command, "H=1");
       digitalWrite(nHeating, true);
       Serial.println("Heizung an");
+      char command[] = "C=?";
+      I2C_SendRequest(I2C_PLANT_ADDR, command);
+      Task_100ms();
+      I2C_Master_Steady();                          // give background processing a chance
+      Serial.println("Request sent");
+      Serial.print(" C=");
+      Serial.print(dTemperature);
   }
+
   else if(dTemperature < tTemperature && dTemperature > tTemperature)
   {
     Serial.println("Temperatur ist im Rahmen");
+    char command[] = "C=?";
+    I2C_SendRequest(I2C_PLANT_ADDR, command);
+    Serial.println("Request sent");
+    Task_100ms();
+    I2C_Master_Steady();                          // give background processing a chance
+    Serial.print(" C=");
+    Serial.print(dTemperature);
     return 0;
   }
+
   else 
   {
       //strcpy(command, "H=0");
       digitalWrite(nHeating, false);
       Serial.println("Heizung aus");
-  }
+      char command[] = "C=?";
       I2C_SendRequest(I2C_PLANT_ADDR, command);
-      Serial.print("Jo");
-      Serial.println("Jetzt Senden");
-
-      ShowData();
-      delay(500);
+      Task_100ms();
+      I2C_Master_Steady();                          // give background processing a chance
+      Serial.print(" C=");
+      Serial.print(dTemperature);
+  }
       Serial.println("Temp Schleife läuft noch!!!");
   }
 
@@ -411,11 +444,32 @@ void waschprogramm1(bool run)
   int     maxWaescheMenge = 6;
 
   //strcpy(szCommand, "I=1");
-  if(run == true and bDoorClose == true)
+  while(run == true && bDoorClose == true)
   {
-    handleTemp(targetTemperature);
-    Serial.println("Handle Temp ist durch zurück in wp1");
-    isRunning = false;
+    // Wassertemperatur einstellen
+    if(temp100.check())
+    {
+      handleTemp(targetTemperature);
+      Serial.println("Handle Temp ist durch zurück in wp1");
+    }
+
+    // Daten aktualisieren
+    if(akt_data.check())
+    {
+      Task_100ms();
+      Serial.print("100ms Task wurde ausgeführt!");
+    }
+
+    if(display_data.check())
+    {
+      ShowData();
+    }
+
+    if(wp1_duration.check())
+    {
+      isRunning = false;
+      Serial.println("isRunning ist auf flase gesetzt worden!!! (WP1 beendet!)");
+    }
   }
 
 }
@@ -537,7 +591,7 @@ This allows to use the integrated Arduino serial plotter or an external software
 */
 void Task_1s()
 {
-  zeit ++;                                  // Timer
+ // zeit ++;                                  // Timer
 
   ToggleDigitalIOPort(LEDpin);                  // toggle output to LED
 
@@ -545,8 +599,16 @@ void Task_1s()
 
    door();                                      // Türzustand senden
 
+
+
 }
 
+/*!
+==========================================================================================================================
+==========================================================================================================================
+==========================================================================================================================
+==========================================================================================================================
+*/
 //! Usual arduino steadily called function
 /*!
 Usual arduino steadily called function.
@@ -578,6 +640,15 @@ void loop()
   }
   waschprogramm1(isRunning);
 
+  digitalWrite(nHeating, true);
+  Serial.println("Heizung an");
+  char command[] = "C=?";
+  I2C_SendRequest(I2C_PLANT_ADDR, command);
+  /*!
+  Serial.println("Request sent");
+
+  */
+
   I2C_Master_Steady();                          // give background processing a chance
-  delay(1);
+  //delay(1);
 }
