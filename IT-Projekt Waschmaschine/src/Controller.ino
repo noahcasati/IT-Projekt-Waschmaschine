@@ -97,7 +97,7 @@ int             nCount10msec = 0;
 //! counter for 100 msec up to 1sec
 int             nCount100msec = 0;
 // enable waschprogramm
-bool          isRunning = false;               
+bool          isRunning = true;               
 
 
                                                 // I2C
@@ -137,7 +137,7 @@ Metro send_data_plant = Metro(100);
 Metro send_data_esp = Metro(500);
 Metro receive_data_esp = Metro(500);
 Metro display_data = Metro(1000);
-Metro wp1_duration = Metro(120000);
+Metro wp1_duration = Metro(30000);
 
 
 //! Banner and version number
@@ -383,58 +383,48 @@ void charArrOut(char arr[])
 
 int handleTemp(double tTemperature)
 {
-  while(dTemperature <= tTemperature || dTemperature > tTemperature + 2) 
+
+  bool i = true;
+
+  while(i == true) 
   {
-  char command[] = "C=?";
-  I2C_SendRequest(I2C_PLANT_ADDR, command);
-  Serial.print(" C=");
-  Serial.print(dTemperature);
 
   if(dTemperature < tTemperature)
   {
-      //strcpy(command, "H=1");
-      digitalWrite(nHeating, true);
-      Serial.println("Heizung an");
-      char command[] = "C=?";
-      I2C_SendRequest(I2C_PLANT_ADDR, command);
+      WorkOnCommandsForDigitalIO("H=1");
       Task_100ms();
       I2C_Master_Steady();                          // give background processing a chance
-      Serial.println("Request sent");
-      Serial.print(" C=");
+      Serial.println("Heizung An");
+      Serial.println(" C=");
       Serial.print(dTemperature);
   }
 
-  else if(dTemperature < tTemperature && dTemperature > tTemperature)
+  else if(dTemperature >= tTemperature && dTemperature < tTemperature + 2)
   {
-    Serial.println("Temperatur ist im Rahmen");
-    char command[] = "C=?";
-    I2C_SendRequest(I2C_PLANT_ADDR, command);
-    Serial.println("Request sent");
+    WorkOnCommandsForDigitalIO("H=0");
     Task_100ms();
     I2C_Master_Steady();                          // give background processing a chance
+    Serial.println("Temperatur ist im Rahmen");
     Serial.print(" C=");
     Serial.print(dTemperature);
-    return 0;
+    i = false;
   }
 
   else 
   {
-      //strcpy(command, "H=0");
-      digitalWrite(nHeating, false);
-      Serial.println("Heizung aus");
-      char command[] = "C=?";
-      I2C_SendRequest(I2C_PLANT_ADDR, command);
+      WorkOnCommandsForDigitalIO("H=0");
       Task_100ms();
       I2C_Master_Steady();                          // give background processing a chance
-      Serial.print(" C=");
+      Serial.println("Heizung aus");
+      Serial.println(" C=");
       Serial.print(dTemperature);
   }
       Serial.println("Temp Schleife läuft noch!!!");
   }
-
+  return 0;
 }
 
-void waschprogramm1(bool run)
+void waschprogramm1()
 {
   int     O = 3;                    // Maschpulvermenge
   int     o = 2;                    // Weichspüler
@@ -444,20 +434,20 @@ void waschprogramm1(bool run)
   int     maxWaescheMenge = 6;
 
   //strcpy(szCommand, "I=1");
-  while(run == true && bDoorClose == true)
+  while(isRunning == true && bDoorClose == true)
   {
     // Wassertemperatur einstellen
     if(temp100.check())
     {
       handleTemp(targetTemperature);
-      Serial.println("Handle Temp ist durch zurück in wp1");
+      Serial.println("Handle Temp wurde ausgeführt");
     }
 
     // Daten aktualisieren
     if(akt_data.check())
     {
       Task_100ms();
-      Serial.print("100ms Task wurde ausgeführt!");
+      Serial.println("100ms Task wurde ausgeführt!");
     }
 
     if(display_data.check())
@@ -465,10 +455,16 @@ void waschprogramm1(bool run)
       ShowData();
     }
 
+    if(hundert.check())
+    {
+      door();
+      Serial.println("Tür-Sensor aktualisiert");
+    }
+
     if(wp1_duration.check())
     {
       isRunning = false;
-      Serial.println("isRunning ist auf flase gesetzt worden!!! (WP1 beendet!)");
+      Serial.println("isRunning ist auf false gesetzt worden!!! (WP1 beendet!)");
     }
   }
 
@@ -638,16 +634,9 @@ void loop()
       Task_1s();                                // call user 1 sec function
     }
   }
-  waschprogramm1(isRunning);
+  waschprogramm1();
 
-  digitalWrite(nHeating, true);
-  Serial.println("Heizung an");
-  char command[] = "C=?";
-  I2C_SendRequest(I2C_PLANT_ADDR, command);
-  /*!
-  Serial.println("Request sent");
-
-  */
+  door();
 
   I2C_Master_Steady();                          // give background processing a chance
   //delay(1);
