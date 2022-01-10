@@ -170,7 +170,7 @@ void setup()
 {
   pinMode(LEDpin, OUTPUT);                      // init arduino LED pin as an output
 
-  Serial.begin(9600);                         // set up serial port for 115200 Baud
+  Serial.begin(115200);                         // set up serial port for 115200 Baud
   esp_uno.begin(9600);                          // set up SoftwareSerial port 9600 Baud
 
 #if defined (__AVR_ATmega32U4__)
@@ -209,7 +209,7 @@ void ResetIO()
   digitalWrite(nWaterIntake, false);            // water intake valve
   digitalWrite(nWaterPump, false);              // water pump
   digitalWrite(nHeating, false);                // heater
-  digitalWrite(nDoorClosed, false);             // Door
+  digitalWrite(nDoorClosed, true);             // Door
 }
 
 //! Check if a command has been typed
@@ -285,6 +285,9 @@ bool CreateNextSteadyCommand(char szCommand[])
       strcpy(szCommand, "r?");                    // rpm Abfrage
   case 7:
     strcpy(szCommand, "L?");
+    break;
+  case 8:
+    strcpy(szCommand, "o?");
     break;
 
   // more cases for other requests or settings
@@ -363,8 +366,16 @@ bool InterpreteResponse(char szResponse[])
     case 'A':                                   // got a fresh dWaterLevel value
       dWaterLevel = atof(szResponse+2);         // convert response part after '=' to double
       return true;                              // done
+    case 'W':                                   // got a fresh warning bits value
+      nWarnings = atoi(szResponse+2);           // convert response part after '=' to integer
+      return true;                              // done
+    ///*!
+    case 'D':
+      bDoorClose = atoi(szResponse+2);
+      return true;
+    //*/
     case 'r':
-      drpm = atof(szResponse+2);              // convert response part after '=' to double
+      drpm = atoi(szResponse+2);              // convert response part after '=' to integer
       return true;
     case 'L':
       dWaeschemenge = atof(szResponse+2);
@@ -372,9 +383,6 @@ bool InterpreteResponse(char szResponse[])
     case 'o':
       dWaschmittelmenge = atof(szResponse+2);
       return true;
-    case 'W':                                   // got a fresh warning bits value
-      nWarnings = atoi(szResponse+2);           // convert response part after '=' to integer
-      return true;                              // done
     // more cases may follow
     }
   }
@@ -388,14 +396,14 @@ void door()
   if(digitalRead(doorSwitch) == false)
   {
     //Serial.print("funktionirt bis hier hin!");
-    bDoorClose = true;
+    digitalWrite(nDoorClosed, true);             // Door
   } 
   else
   {
     //Serial.print("Läuft nícht!");
     //WorkOnCommandsForDigitalIO(D=0)  
     //Serial.println("Ist offen");
-    bDoorClose = false;
+    digitalWrite(nDoorClosed, false);             // Door
     }
 }
 

@@ -1,11 +1,16 @@
-#include "WiFi.h"
+#include "ESP8266WiFi.h"
 #include "SoftwareSerial.h"
+#include "Metro.h"
 
 char* ssid     = "UPCC434158";
 char* password = "xxbj5wpkmzcA";
 char* host = "localhost";
 
-SoftwareSerial esp_uno (7 , 3); // RX, TX
+SoftwareSerial esp_uno (3 , 5); // RX, TX
+
+Metro sekunde = Metro(1000);
+
+Metro alive = Metro(3000);
 
 //Serial buffer
 String Data = "";
@@ -13,6 +18,8 @@ String Data = "";
 //Input variables
 bool door = false;
 
+bool aliveSignal = false;
+  
 
 void setup()
 {
@@ -20,11 +27,16 @@ void setup()
     Serial.begin(9600);
     esp_uno.begin(9600);
 
+    pinMode(LED_BUILTIN, OUTPUT);
+
     // Connect Wifi
     Serial.println();
     Serial.println();
     Serial.print("Connecting to ");
     Serial.println(ssid);
+    delay(50);
+    esp_uno.write("test test 123");               // send to esp via SoftwareSerial
+
 
     WiFi.begin(ssid, password);
 
@@ -37,6 +49,7 @@ void setup()
     Serial.println("WiFi connected");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
+    delay(50);
 }
 
 
@@ -45,7 +58,22 @@ void loop()
 {
 
 
-      esp_uno.write("test test 123");               // send to esp via SoftwareSerial
+      esp_uno.write("test test 123");               // send to Arduino via SoftwareSerial
+      delay(50);
+
+      if(sekunde.check())
+      {
+        Serial.println("loop läuft mit serial.println");
+        
+      }
+
+      if(alive.check())
+      {
+        digitalWrite(LED_BUILTIN, aliveSignal);
+        aliveSignal = !aliveSignal;
+      }
+      
+      delay(50);
 
 /*!
  while (esp_uno.available())
