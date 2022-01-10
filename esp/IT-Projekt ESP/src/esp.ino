@@ -1,13 +1,18 @@
 #include "WiFi.h"
 #include "SoftwareSerial.h"
 
-const char ssid[]     = "UPCC434158";
-const char password[] = "xxbj5wpkmzcA";
-const char* host = "localhost";
-
-int status = WL_IDLE_STATUS;
+char* ssid     = "UPCC434158";
+char* password = "xxbj5wpkmzcA";
+char* host = "localhost";
 
 SoftwareSerial esp_uno (7 , 3); // RX, TX
+
+//Serial buffer
+String Data = "";
+
+//Input variables
+bool door = false;
+
 
 void setup()
 {
@@ -21,7 +26,7 @@ void setup()
     Serial.print("Connecting to ");
     Serial.println(ssid);
 
-    status = WiFi.begin(ssid, password);
+    WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -38,7 +43,28 @@ void setup()
 
 void loop()
 {
-  
+
+
+      esp_uno.write("test test 123");               // send to esp via SoftwareSerial
+
+/*!
+ while (esp_uno.available())
+    {
+        char character = esp_uno.read(); // Receive a single character from the software serial port
+        Data.concat(character); // Add the received character to the receive buffer
+        if (character == '\n')
+        {
+            Serial.print("Received: ");
+            Serial.println(Data);
+
+            // Add your code to parse the received line here....
+
+            // Clear receive buffer so we're ready to receive the next line
+            Data = "";
+        }
+    }
+*/
+/*!  
 float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();  
   if(isnan(temperature) || isnan(humidity)){
@@ -92,4 +118,8 @@ float temperature = dht.readTemperature();
 
     Serial.println();
     Serial.println("closing connection");
+
+    */
+
+
 }

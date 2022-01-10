@@ -88,6 +88,8 @@ with x either 1 or 0.
 #include "I2C_Master.h"
 // include Metro header for "Multitasking"
 #include "Metro.h"
+//include SoftwareSerial for additional serial communication
+#include "SoftwareSerial.h"
 
                                                 // time management
 //! for 10 msec detection
@@ -97,7 +99,7 @@ int             nCount10msec = 0;
 //! counter for 100 msec up to 1sec
 int             nCount100msec = 0;
 // enable waschprogramm
-bool          isRunning = true;               
+bool          isRunning = false;               
 
 
                                                 // I2C
@@ -105,6 +107,12 @@ bool          isRunning = true;
 const int       I2C_PLANT_ADDR = 10;
 //! standard 100KHz for I²C
 const long      I2C_FREQUENCY = 100000L;
+
+//SoftwareSerial init
+SoftwareSerial esp_uno (10 , 11); // RX, TX
+
+char rMessage;
+
 
                                                 // static const PLC IO output numbers
 const int       nWaterIntake = 2;               ///< water intake valve
@@ -122,9 +130,9 @@ double          dTime = 0.0;                    ///< simulation time in min
 double          dTemperature = 0.0;             ///< temperature
 double          dWaterLevel = 0.0;              ///< water level
 int             nWarnings = 0;                  ///< warning bits
-int          drpm = 0.0;                     ///< rpm
-int          dWaeschemenge = 0.0;            ///< Wäschemenge
-int          dWaschmittelmenge = 0.0;        ///< Waschmittelmange
+int          drpm = 0;                     ///< rpm
+int          dWaeschemenge = 0;            ///< Wäschemenge
+int          dWaschmittelmenge = 0;        ///< Waschmittelmange
 
 // Timing Variablen fürs "Multitasking" (Metro)
 Metro hundert = Metro(100);
@@ -162,12 +170,24 @@ void setup()
 {
   pinMode(LEDpin, OUTPUT);                      // init arduino LED pin as an output
 
-  Serial.begin(115200);                         // set up serial port for 115200 Baud
+  Serial.begin(9600);                         // set up serial port for 115200 Baud
+  esp_uno.begin(9600);                          // set up SoftwareSerial port 9600 Baud
+
+#if defined (__AVR_ATmega32U4__)
+  while (! esp_uno)
+  {
+    ;
+  }
+#endif
+
 #if defined (__AVR_ATmega32U4__)
   while ( ! Serial )                            // wait for serial port, ATmega32U4 chips only
     ;
 #endif
   Serial.println(szBanner);                     // show banner and version
+
+  pinMode(10, INPUT);
+  pinMode(11, OUTPUT);
 
   // initialize IO, PLC outputs
   pinMode(nWaterIntake, OUTPUT);                // water intake valve
@@ -263,6 +283,9 @@ bool CreateNextSteadyCommand(char szCommand[])
     break;
   case 6:
       strcpy(szCommand, "r?");                    // rpm Abfrage
+  case 7:
+    strcpy(szCommand, "L?");
+    break;
 
   // more cases for other requests or settings
   default:
@@ -593,7 +616,7 @@ void Task_1s()
 
   ShowData();                                   // possibly remove later
 
-   door();                                      // Türzustand senden
+   //door();                                      // Türzustand senden
 
 
 
@@ -636,7 +659,20 @@ void loop()
   }
   waschprogramm1();
 
-  door();
+  if(sekunde.check())
+  {
+  esp_uno.write("test test 123");               // send to esp via SoftwareSerial
+  }
+/*!
+  if(Serial.available())
+  {
+
+    rMessage = Serial.read();
+    esp_uno.print(rMessage);
+    Serial.println(rMessage);
+
+  }
+  */
 
   I2C_Master_Steady();                          // give background processing a chance
   //delay(1);
