@@ -99,7 +99,7 @@ int             nCount10msec = 0;
 //! counter for 100 msec up to 1sec
 int             nCount100msec = 0;
 // enable waschprogramm
-bool          isRunning = false;               
+bool          isRunning = true;               
 
 
                                                 // I2C
@@ -145,7 +145,7 @@ Metro send_data_plant = Metro(100);
 Metro send_data_esp = Metro(500);
 Metro receive_data_esp = Metro(500);
 Metro display_data = Metro(1000);
-Metro wp1_duration = Metro(30000);
+Metro wp1_duration = Metro(60000);
 
 
 //! Banner and version number
@@ -209,7 +209,7 @@ void ResetIO()
   digitalWrite(nWaterIntake, false);            // water intake valve
   digitalWrite(nWaterPump, false);              // water pump
   digitalWrite(nHeating, false);                // heater
-  digitalWrite(nDoorClosed, true);             // Door
+  digitalWrite(nDoorClosed, false);             // Door
 }
 
 //! Check if a command has been typed
@@ -455,18 +455,48 @@ int handleTemp(double tTemperature)
   return 0;
 }
 
+int handleWater(double tWaterlevel)
+{
+  if(digitalRead(nDoorClosed) == true)
+  {
+    while(tWaterlevel > dWaterLevel) 
+    {
+      WorkOnCommandsForDigitalIO("I=1");
+      Task_100ms();
+      I2C_Master_Steady();                          // give background processing a chance
+      Serial.println("Ventil Auf");
+      Serial.println(" A=");
+      Serial.print(dWaterLevel);
+    }
+    WorkOnCommandsForDigitalIO("I=0");
+    Task_100ms();
+    I2C_Master_Steady();                          // give background processing a chance
+    Serial.println("Ventil Zu");
+  }
+}
+
 void waschprogramm1()
 {
   int     O = 3;                    // Maschpulvermenge
   int     o = 2;                    // Weichspüler
   int     rpm = 800;                // Trommel rpm
   double  targetTemperature = 60;   
-  double  targetWaterLevel = 2.3;
+  double  targetWaterLevel = 1.3;
   int     maxWaescheMenge = 6;
+  bool    isFilled = false;
+
+  
 
   //strcpy(szCommand, "I=1");
   while(isRunning == true && bDoorClose == true)
   {
+    if(isFilled == false)
+    {
+      handleWater(targetWaterLevel);
+      Serial.println("Handle Water wurde ausgeführt");
+      isFilled = true;
+    }
+
     // Wassertemperatur einstellen
     if(temp100.check())
     {
@@ -666,12 +696,12 @@ void loop()
     }
   }
   waschprogramm1();
-
+/*!
   if(sekunde.check())
   {
   esp_uno.write("test test 123");               // send to esp via SoftwareSerial
   }
-/*!
+
   if(Serial.available())
   {
 

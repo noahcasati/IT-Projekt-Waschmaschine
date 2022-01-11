@@ -4,7 +4,7 @@
 
 char* ssid     = "UPCC434158";
 char* password = "xxbj5wpkmzcA";
-char* host = "localhost";
+char* host = "192.168.0.228";
 
 SoftwareSerial esp_uno (3 , 5); // RX, TX
 
@@ -16,7 +16,25 @@ Metro alive = Metro(3000);
 String Data = "";
 
 //Input variables
-bool door = false;
+bool heizung = false;
+bool pumpe = false;
+bool tuer = true;
+
+bool watervalve = true;
+
+int rpm = 0;
+int waschmittel = 0;
+
+double temperature = 0.0;
+double waterlevel = 0.0;
+
+
+//Controll variables
+bool abpumpen = false;
+bool wp1 = false;
+bool wp2 = false;
+bool wp3 = false;
+
 
 bool aliveSignal = false;
   
@@ -56,8 +74,7 @@ void setup()
 
 void loop()
 {
-
-
+    /*!
       esp_uno.write("test test 123");               // send to Arduino via SoftwareSerial
       delay(50);
 
@@ -74,6 +91,7 @@ void loop()
       }
       
       delay(50);
+    */
 
 /*!
  while (esp_uno.available())
@@ -92,20 +110,28 @@ void loop()
         }
     }
 */
-/*!  
-float temperature = dht.readTemperature();
-  float humidity = dht.readHumidity();  
-  if(isnan(temperature) || isnan(humidity)){
-    Serial.println("Failed to read DHT11");
-  }else{
-    Serial.print("Humidity: ");
-    Serial.print(humidity);
-    Serial.print(" %\t");
-    Serial.print("Temperature: ");
+///*!  
+
+  
+    Serial.println("Heizung: ");
+    Serial.print(heizung);
+    Serial.println("Pumpe");
+    Serial.print(pumpe);
+    Serial.println("rpm: ");
+    Serial.print(rpm);
+    Serial.println("Temperatur: ");
     Serial.print(temperature);
-    Serial.println(" *C");
+    Serial.println("Tuer");
+    Serial.print(tuer);
+    Serial.println("Waschmittel: ");
+    Serial.print(waschmittel);
+    Serial.println("Waterlevel: ");
+    Serial.print(waterlevel);
+    Serial.println("Waterventil: ");
+    Serial.print(watervalve);
+
     delay(3000);
-  }
+  
    
     Serial.print("connecting to ");
     Serial.println(host);
@@ -122,12 +148,7 @@ float temperature = dht.readTemperature();
 
 
     // This will send the request to the server
- client.print(String("GET http://your_hostname/iot_project/connect.php?") + 
-                          ("&temperature=") + temperature +
-                          ("&humidity=") + humidity +
-                          " HTTP/1.1\r\n" +
-                 "Host: " + host + "\r\n" +
-                 "Connection: close\r\n\r\n");
+ client.print(String("GET connect.php?") + ("&heizung=") + heizung + ("&pumpe=") + pumpe + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
     unsigned long timeout = millis();
     while (client.available() == 0) {
         if (millis() - timeout > 1000) {
@@ -147,7 +168,7 @@ float temperature = dht.readTemperature();
     Serial.println();
     Serial.println("closing connection");
 
-    */
+    //*/
 
 
 }
