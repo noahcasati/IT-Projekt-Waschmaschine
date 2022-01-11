@@ -7,7 +7,7 @@ char *ssid = "UPCC434158";
 char *password = "xxbj5wpkmzcA";
 char *host = "192.168.0.228";
 
-SoftwareSerial esp_uno(3, 5); // RX, TX
+SoftwareSerial esp_uno(2, 3); // RX, TX
 
 Metro sekunde = Metro(1000);
 Metro alive = Metro(3000);
@@ -34,6 +34,9 @@ bool wp2 = false;
 bool wp3 = false;
 bool aliveSignal = false;
 
+char * msgIn = "";
+char * datensatz;
+
 void setup()
 {
 
@@ -41,6 +44,8 @@ void setup()
     esp_uno.begin(9600);
 
     pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(2, INPUT);
+    pinMode(3, OUTPUT);
 
     // Connect Wifi
     Serial.println();
@@ -127,4 +132,22 @@ void loop()
     {
         Serial.printf("HTTP-Verbindung konnte nicht hergestellt werden!");
     }
+
+    esp_uno.print("10");
+    esp_uno.println("\n");
+    delay(30);
+
+    while(esp_uno.available() > 0)
+  {
+    char incoming = esp_uno.read();
+    if(esp_uno.read() == '\n')
+    {
+      Serial.println(incoming);
+      msgIn = incoming;
+    }
+    delay(30);
+  }
+
+  datensatz = strtok(msgIn, ";");
+
 }

@@ -724,4 +724,14 @@ void loop()
 
   I2C_Master_Steady();                          // give background processing a chance
   //delay(1);
+
+  while(esp_uno.available() > 0)
+  {
+    float value = esp_uno.parseFloat();
+    if(esp_uno.read() == '\n')
+    {
+      Serial.println(value);
+    }
+  }
+
 }
