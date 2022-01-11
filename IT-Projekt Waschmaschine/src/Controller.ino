@@ -99,7 +99,7 @@ int             nCount10msec = 0;
 //! counter for 100 msec up to 1sec
 int             nCount100msec = 0;
 // enable waschprogramm
-bool          isRunning = true;               
+bool          isRunning = false;               
 
 
                                                 // I2C
@@ -129,10 +129,12 @@ const int       nDoorClosed = 8;                ///< door closed sensor (Input)
 double          dTime = 0.0;                    ///< simulation time in min
 double          dTemperature = 0.0;             ///< temperature
 double          dWaterLevel = 0.0;              ///< water level
+double          dWasserInWaesche = 0.0;
 int             nWarnings = 0;                  ///< warning bits
-int          drpm = 0;                     ///< rpm
-int          dWaeschemenge = 0;            ///< Wäschemenge
-int          dWaschmittelmenge = 0;        ///< Waschmittelmange
+int             drpm = 0;                     ///< rpm
+int             dWaeschemenge = 0;            ///< Wäschemenge
+int             dWaschmittelmenge = 0;        ///< Waschmittelmange
+
 
 // Timing Variablen fürs "Multitasking" (Metro)
 Metro hundert = Metro(100);
@@ -289,6 +291,9 @@ bool CreateNextSteadyCommand(char szCommand[])
   case 8:
     strcpy(szCommand, "o?");
     break;
+  case 9:
+    strcpy(szCommand, "w?");
+    break;
 
   // more cases for other requests or settings
   default:
@@ -382,6 +387,9 @@ bool InterpreteResponse(char szResponse[])
       return true;
     case 'o':
       dWaschmittelmenge = atof(szResponse+2);
+      return true;
+    case 'w':
+      dWasserInWaesche = atof(szResponse+2);
       return true;
     // more cases may follow
     }
@@ -545,6 +553,8 @@ void ShowData()
   Serial.print(dTemperature);
   Serial.print(" A=");
   Serial.print(dWaterLevel);
+  Serial.print(" w=");
+  Serial.print(dWasserInWaesche);
   Serial.print(" D=");
   Serial.print(digitalRead(nDoorClosed));
   Serial.print(" RPM=");

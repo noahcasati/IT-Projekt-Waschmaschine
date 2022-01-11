@@ -148,7 +148,7 @@ void loop()
 
 
     // This will send the request to the server
- client.print(String("GET connect.php?") + ("&heizung=") + heizung + ("&pumpe=") + pumpe + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
+ client.print(String("GET http://192.168.0.228/connect.php?") + ("heizung=") + heizung + ("&pumpe=") + pumpe+ ("&rpm=") + rpm + ("&temperature=") + temperature + ("&tuer=") + tuer + ("&waschmittel=") + waschmittel + ("&waterlevel=") + waterlevel + ("&watervalve=") + watervalve);
     unsigned long timeout = millis();
     while (client.available() == 0) {
         if (millis() - timeout > 1000) {
