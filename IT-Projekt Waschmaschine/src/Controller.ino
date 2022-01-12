@@ -135,6 +135,11 @@ int             drpm = 0;                     ///< rpm
 int             dWaeschemenge = 0;            ///< Wäschemenge
 int             dWaschmittelmenge = 0;        ///< Waschmittelmange
 
+//Variables for Communication between ESP and Uno
+char msgOut;
+//Serial buffer
+String Data = "";
+
 
 // Timing Variablen fürs "Multitasking" (Metro)
 Metro hundert = Metro(100);
@@ -725,6 +730,10 @@ void loop()
   I2C_Master_Steady();                          // give background processing a chance
   //delay(1);
 
+  msgOut = digitalRead(nHeating) + ';' + digitalRead(nWaterPump) + ';' + drpm + ';' + dTemperature + ';' + digitalRead(nDoorClosed) + ';' + dWaschmittelmenge + ';' + dWaterLevel + ';' + digitalRead(nWaterIntake);
+  esp_uno.print(msgOut);
+  esp_uno.println("\n");
+/*!
   while(esp_uno.available() > 0)
   {
     float value = esp_uno.parseFloat();
@@ -733,5 +742,17 @@ void loop()
       Serial.println(value);
     }
   }
+  */
+ while(esp_uno.available() > 0)
+    {
+        char recieve = esp_uno.read();
+        Data.concat(recieve);
+
+        if(esp_uno.read() == '\n')
+        {
+            Serial.println(Data);
+        }
+        delay(30);
+    }
 
 }

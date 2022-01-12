@@ -2,6 +2,9 @@
 #include <ESP8266HTTPClient.h>
 #include "SoftwareSerial.h"
 #include "Metro.h"
+#include "stdio.h"
+#include "string.h"
+
 
 char *ssid = "UPCC434158";
 char *password = "xxbj5wpkmzcA";
@@ -34,8 +37,10 @@ bool wp2 = false;
 bool wp3 = false;
 bool aliveSignal = false;
 
-char * msgIn = "";
-char * datensatz;
+//Variables for recieving data from Uno
+char msgIn[];
+char * ergArr[8];
+
 
 void setup()
 {
@@ -138,16 +143,29 @@ void loop()
     delay(30);
 
     while(esp_uno.available() > 0)
-  {
-    char incoming = esp_uno.read();
-    if(esp_uno.read() == '\n')
     {
-      Serial.println(incoming);
-      msgIn = incoming;
-    }
-    delay(30);
-  }
+        char recieve = esp_uno.read();
+        Data.concat(recieve);
 
-  datensatz = strtok(msgIn, ";");
+        if(esp_uno.read() == '\n')
+        {
+            Serial.println(Data);
+            char str[100] = Data;
+        }
+        delay(30);
+    }
+
+    char * teile = strtok(Data, ";");
+
+    int index = 0;
+    while(teile != NULL)
+    {
+        ergArr[index] = teile;
+        teile = strtok(NULL, ";");
+        index++;
+    }
+
+    Serial.print("");
+
 
 }
