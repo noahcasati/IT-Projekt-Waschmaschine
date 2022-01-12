@@ -99,7 +99,7 @@ int             nCount10msec = 0;
 //! counter for 100 msec up to 1sec
 int             nCount100msec = 0;
 // enable waschprogramm
-bool          isRunning = false;               
+bool          isRunning = true;               
 
 
                                                 // I2C
@@ -152,6 +152,7 @@ Metro send_data_plant = Metro(100);
 Metro send_data_esp = Metro(500);
 Metro receive_data_esp = Metro(500);
 Metro display_data = Metro(1000);
+Metro rpmtime = Metro(5000);
 Metro wp1_duration = Metro(60000);
 
 
@@ -284,20 +285,17 @@ bool CreateNextSteadyCommand(char szCommand[])
     break;
   case 5:                                       // request door state
     if(bDoorClose == true)
-      strcpy(szCommand, "D=1");                    // Tür zu
+      strcpy(szCommand, "D=1");                 // Tür zu
     else
-      strcpy(szCommand, "D=0");                // Tür auf
+      strcpy(szCommand, "D=0");                 // Tür auf
     break;
   case 6:
-      strcpy(szCommand, "r?");                    // rpm Abfrage
+      strcpy(szCommand, "r?");                  // rpm Abfrage
   case 7:
-    strcpy(szCommand, "L?");
+    strcpy(szCommand, "L?");                    // Wäschemenge Abfrage
     break;
   case 8:
-    strcpy(szCommand, "o?");
-    break;
-  case 9:
-    strcpy(szCommand, "w?");
+    strcpy(szCommand, "o?");                    // Waschmittel Abfrage
     break;
 
   // more cases for other requests or settings
@@ -393,9 +391,6 @@ bool InterpreteResponse(char szResponse[])
     case 'o':
       dWaschmittelmenge = atof(szResponse+2);
       return true;
-    case 'w':
-      dWasserInWaesche = atof(szResponse+2);
-      return true;
     // more cases may follow
     }
   }
@@ -428,7 +423,7 @@ void charArrOut(char arr[])
 int handleTemp(double tTemperature)
 {
 
-  bool i = true;
+  bool i = true;                                  // Wenn true -> while-Schleife läuft
 
   while(i == true) 
   {
@@ -493,10 +488,10 @@ void waschprogramm1()
   int     O = 3;                    // Maschpulvermenge
   int     o = 2;                    // Weichspüler
   int     rpm = 800;                // Trommel rpm
-  double  targetTemperature = 60;   
-  double  targetWaterLevel = 1.3;
-  int     maxWaescheMenge = 6;
-  bool    isFilled = false;
+  double  targetTemperature = 60;   // Ziel Wassertemperatur
+  double  targetWaterLevel = 1.3;   // Ziel Wassermenge
+  bool    isFilled = false;         // Wenn Wassermenge erreicht -> true
+  bool    rpmONOFF = false;         // Schaltet Trommeldrehzahl an oder aus
 
   
 
@@ -506,7 +501,7 @@ void waschprogramm1()
     if(isFilled == false)
     {
       handleWater(targetWaterLevel);
-      Serial.println("Handle Water wurde ausgeführt");
+      //Serial.println("Handle Water wurde ausgeführt");
       isFilled = true;
     }
 
@@ -514,14 +509,14 @@ void waschprogramm1()
     if(temp100.check())
     {
       handleTemp(targetTemperature);
-      Serial.println("Handle Temp wurde ausgeführt");
+      //Serial.println("Handle Temp wurde ausgeführt");
     }
 
     // Daten aktualisieren
     if(akt_data.check())
     {
       Task_100ms();
-      Serial.println("100ms Task wurde ausgeführt!");
+      //Serial.println("100ms Task wurde ausgeführt!");
     }
 
     if(display_data.check())
@@ -532,13 +527,43 @@ void waschprogramm1()
     if(hundert.check())
     {
       door();
-      Serial.println("Tür-Sensor aktualisiert");
+      //Serial.println("Tür-Sensor aktualisiert");
+    }
+
+    if(rpmtime.check())
+    {
+      if(rpmONOFF == true)
+      {
+        CreateNextSteadyCommand("r=800");
+        Task_100ms();
+        I2C_Master_Steady();                          // give background processing a chance
+        Serial.println("Drehzahl An");
+        rpmONOFF = !rpmONOFF;
+      }
+      else
+      {
+        CreateNextSteadyCommand("r=0");
+        Task_100ms();
+        I2C_Master_Steady();                          // give background processing a chance
+        Serial.println("Drehzahl Aus");
+        rpmONOFF = !rpmONOFF;
+      }
     }
 
     if(wp1_duration.check())
     {
       isRunning = false;
       Serial.println("isRunning ist auf false gesetzt worden!!! (WP1 beendet!)");
+      WorkOnCommandsForDigitalIO("P=1");
+        Task_100ms();
+        I2C_Master_Steady();                          // give background processing a chance
+        delay(5000);
+        WorkOnCommandsForDigitalIO("P=0");
+        Task_100ms();
+        I2C_Master_Steady();                          // give background processing a chance
+        CreateNextSteadyCommand("r=0");
+        Task_100ms();
+        I2C_Master_Steady();                          // give background processing a chance
     }
   }
 
@@ -729,11 +754,11 @@ void loop()
 
   I2C_Master_Steady();                          // give background processing a chance
   //delay(1);
-
+/*!
   msgOut = digitalRead(nHeating) + ';' + digitalRead(nWaterPump) + ';' + drpm + ';' + dTemperature + ';' + digitalRead(nDoorClosed) + ';' + dWaschmittelmenge + ';' + dWaterLevel + ';' + digitalRead(nWaterIntake);
   esp_uno.print(msgOut);
   esp_uno.println("\n");
-/*!
+
   while(esp_uno.available() > 0)
   {
     float value = esp_uno.parseFloat();
@@ -742,7 +767,7 @@ void loop()
       Serial.println(value);
     }
   }
-  */
+  
  while(esp_uno.available() > 0)
     {
         char recieve = esp_uno.read();
@@ -754,5 +779,5 @@ void loop()
         }
         delay(30);
     }
-
+*/
 }
